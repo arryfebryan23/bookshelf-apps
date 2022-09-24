@@ -28,66 +28,113 @@ document.addEventListener(RENDER_EVENT, function () {
   const completedBookshelfs = document.getElementById("completeBookshelfList");
   completedBookshelfs.innerHTML = "";
 
+  let completeCount = 0;
+  let incompleteCount = 0;
   for (const book of bookshelfs) {
-    const bookElement = makeBookElement(book);
+    let count = book.bookIsComplete ? ++completeCount : ++incompleteCount;
+    const bookElement = makeBookElement(count, book);
     if (!book.bookIsComplete) uncompletedBookshelfs.append(bookElement);
     else completedBookshelfs.append(bookElement);
   }
+
+  if (!completeCount) {
+    const completeColoumn = document.createElement("td");
+    completeColoumn.classList.add("text-center");
+    completeColoumn.innerText =
+      "Belum ada buku yang ditambahkan ke rak selesai dibaca";
+    completeColoumn.setAttribute("colspan", "5");
+
+    const completeRow = document.createElement("tr");
+    completeRow.append(completeColoumn);
+
+    completedBookshelfs.append(completeRow);
+  }
+
+  if (!incompleteCount) {
+    const incompleteColoumn = document.createElement("td");
+    incompleteColoumn.classList.add("text-center");
+    incompleteColoumn.innerText =
+      "Belum ada buku yang ditambahkan ke rak belum selesai dibaca.";
+    incompleteColoumn.setAttribute("colspan", "5");
+
+    const incompleteRow = document.createElement("tr");
+    incompleteRow.append(incompleteColoumn);
+
+    uncompletedBookshelfs.append(incompleteRow);
+  }
 });
 
-function makeBookElement(bookObject) {
-  const bookTitle = document.createElement("h3");
+function makeBookElement(number, bookObject) {
+  const countBook = document.createElement("td");
+  countBook.innerText = number;
+
+  const bookTitle = document.createElement("th");
   bookTitle.innerText = bookObject.bookTitle;
 
-  const bookAuthor = document.createElement("p");
+  const bookAuthor = document.createElement("td");
   bookAuthor.innerText = bookObject.bookAuthor;
 
-  const bookYear = document.createElement("p");
+  const bookYear = document.createElement("td");
   bookYear.innerText = bookObject.bookYear;
 
-  const bookContainer = document.createElement("article");
-  bookContainer.classList.add("book_item");
-  bookContainer.append(bookTitle, bookAuthor, bookYear);
-  bookContainer.setAttribute("id", `book-${bookObject.id}`);
-
-  const containerAction = document.createElement("div");
-  containerAction.classList.add("action");
+  const bookAction = document.createElement("td");
 
   if (bookObject.bookIsComplete) {
+    const uncheckIcon = document.createElement("i");
+    uncheckIcon.classList.add("fa-regular", "fa-circle-xmark");
+
     const undoButton = document.createElement("button");
-    undoButton.classList.add("green");
-    undoButton.innerText = "Belum Selesai Dibaca";
+    undoButton.classList.add("btn", "btn-sm", "btn-warning");
+    undoButton.append(uncheckIcon);
+    undoButton.append(document.createTextNode(" Belum Selesai Dibaca"));
 
     undoButton.addEventListener("click", function () {
       undoBookFromCompleted(bookObject.id);
     });
 
-    containerAction.append(undoButton);
+    bookAction.append(undoButton);
   } else {
+    const iconCheck = document.createElement("i");
+    iconCheck.classList.add("fa-regular", "fa-circle-check");
+
     const checkButton = document.createElement("button");
-    checkButton.classList.add("green");
-    checkButton.innerText = "Selesai Dibaca";
+    checkButton.classList.add("btn", "btn-sm", "btn-success");
+    checkButton.append(iconCheck);
+    checkButton.append(document.createTextNode(" Selesai Dibaca"));
 
     checkButton.addEventListener("click", function () {
       addBookToCompleted(bookObject.id);
     });
 
-    containerAction.append(checkButton);
+    bookAction.append(checkButton);
   }
+  const trashIcon = document.createElement("i");
+  trashIcon.classList.add("fa", "fa-trash");
 
   const trashButton = document.createElement("button");
-  trashButton.classList.add("red");
-  trashButton.innerText = "Hapus Buku";
+  trashButton.classList.add("btn", "btn-sm", "btn-danger");
+  trashButton.append(trashIcon);
+  trashButton.append(document.createTextNode(" Hapus Buku"));
 
   trashButton.addEventListener("click", function () {
     removeBookFromBookshelf(bookObject.id);
   });
+  bookAction.append(" ");
+  bookAction.append(trashButton);
 
-  containerAction.append(trashButton);
+  const bookRow = document.createElement("tr");
+  bookRow.classList.add("book_item");
+  bookRow.append(
+    countBook,
+    bookTitle,
+    bookAuthor,
+    bookYear,
+    bookAction,
+    bookAction
+  );
+  bookRow.setAttribute("id", `book-${bookObject.id}`);
 
-  bookContainer.append(containerAction);
-
-  return bookContainer;
+  return bookRow;
 }
 
 //   ===========================================================================
@@ -96,9 +143,10 @@ function searchBook() {
   const searchBook = document.getElementById("searchBookTitle").value;
   const bookshelfs = document.querySelectorAll(".book_item");
   for (const bookshelf of bookshelfs) {
-    const bookTitle = bookshelf.querySelector("h3").innerText;
+    const bookTitle = bookshelf.querySelector("th").innerText;
+
     if (bookTitle.toLowerCase().includes(searchBook.toLowerCase())) {
-      bookshelf.style.display = "block";
+      bookshelf.style.display = "table-row";
     } else {
       bookshelf.style.display = "none";
     }
